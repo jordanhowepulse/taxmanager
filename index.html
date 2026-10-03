@@ -3892,7 +3892,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{
 
 /* Cloud sync status chip */
 #cloudStatusChip .meta-value{color:var(--teal-light,#5eead4)!important}
-@media(max-width:900px){#cloudStatusChip{display:none}}
+@media(max-width:900px){.header-meta{flex-wrap:wrap!important;row-gap:0.4rem!important;justify-content:flex-start}#cloudStatusChip{display:inline-flex!important;order:-1;padding:0.25rem 0.55rem}#cloudStatusChip .meta-label{font-size:0.58rem}#cloudStatusChip .meta-value{font-size:0.7rem!important}}
 
 
 /* Switch between Sign in and Create account */
@@ -4725,7 +4725,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{
   <div class="subview" data-name="security">
     <button class="subview-back" onclick="openSubview('settings','main')">&larr; Back to Settings</button>
     <div class="card"><h3>&#128273; Account &amp; Security &mdash; Password</h3>
-      <p class="muted" style="margin-bottom:1rem;font-size:0.82rem;">Password-gate the app on this device. This is a client-side gate — it protects against casual access but anyone with your gist token or a JSON backup can still read your data.</p>
+      <p class="muted" style="margin-bottom:1rem;font-size:0.82rem;">Password-gate the app on this device. Your password and two-factor code are checked against the cloud account, so the same credentials work on every device. A JSON backup file you export is unencrypted — keep those somewhere safe.</p>
       <div id="authAcctStatus" style="font-size:0.9rem;margin-bottom:0.9rem;padding:0.75rem;background:rgba(15,23,42,0.4);border-radius:8px;"></div>
       <div class="controls-row">
         <button class="btn success" onclick="if(typeof hasAuth==='function'&&!hasAuth()){authShowGate();}else{authChangePassword();}" id="authMainBtn">&#128273; Set Up Password</button>
@@ -16094,7 +16094,7 @@ window.updateSyncChip = updateSyncChip;
 /* ── Build stamp ──────────────────────────────────────────────────
    Shown in the header so it is obvious at a glance whether the
    browser is running the latest file or a cached copy. */
-const TM_BUILD = '2026-09-22 21:43';
+const TM_BUILD = '2026-10-03 mobile-sync';
 window.TM_BUILD = TM_BUILD;
 (function(){
   function paint() {
