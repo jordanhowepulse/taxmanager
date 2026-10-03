@@ -3894,6 +3894,20 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{
 #cloudStatusChip .meta-value{color:var(--teal-light,#5eead4)!important}
 @media(max-width:900px){#cloudStatusChip{display:none}}
 
+
+/* Switch between Sign in and Create account */
+.auth-alt{
+  display:flex;align-items:center;gap:0.45rem;justify-content:center;
+  margin-top:1rem;padding-top:0.9rem;border-top:1px solid var(--hair);
+  font-size:var(--fs-body-s);color:var(--muted-2);
+}
+.auth-alt button{
+  background:none;border:none;cursor:pointer;font-family:inherit;padding:0;
+  font-size:var(--fs-body-s);font-weight:600;color:var(--teal,#14b8a6);
+  text-decoration:underline;text-underline-offset:2px;
+}
+.auth-alt button:hover{color:var(--teal-light,#5eead4)}
+
 </style>
 </head>
 <body>
@@ -3967,6 +3981,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{
         <button class="btn secondary small" onclick="showForgotPassword()" style="background:transparent;border:none;color:var(--accent);padding:0.35rem 0;">Forgot password?</button>
         <button class="btn" onclick="authLogin()">Sign In</button>
       </div>
+      <div class="auth-alt"><span>No account yet?</span><button type="button" onclick="showSetupView()">Create one</button></div>
     </div>
     <div id="auth2faView" style="display:none;">
       <div class="hint" style="margin-bottom:0.75rem;font-size:0.78rem;">Enter the 6-digit code from your authenticator app.</div>
@@ -3986,6 +4001,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{
     </div>
     <div id="authSetupView" style="display:none;">
       <div class="hint" style="margin-bottom:0.75rem;font-size:0.78rem;">First-time setup. Save the recovery code shown after.</div>
+      <div class="auth-alt" style="margin:0 0 0.9rem;"><span>Already have an account?</span><button type="button" onclick="showLoginView()">Sign in instead</button></div>
       <div class="form-row single"><div><label>Email</label><input type="email" id="setupEmail" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('setupPass').focus();}"></div></div>
       <div class="form-row single"><div><label>Password (min 8 chars)</label><input type="password" id="setupPass" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('setupPass2').focus();}"></div></div>
       <div class="form-row single"><div><label>Confirm password</label><input type="password" id="setupPass2" onkeydown="if(event.key==='Enter'){event.preventDefault();authSetup();}"></div></div>
@@ -11106,9 +11122,22 @@ window.authLogin = async function() {
   if (locked) { authShowMsg('Too many attempts. Try again in ' + locked + 's.', 'error'); return; }
   const email = document.getElementById('authEmail').value.trim();
   const pass = document.getElementById('authPass').value;
-  if (!hasAuth()) { authShowMsg('No account set up on this browser.', 'error'); return; }
-  const a = state.auth;
-  if (email.toLowerCase() !== (a.email || '').toLowerCase()) { authRecordFail(); authShowMsg('Email or password is incorrect.', 'error'); return; }
+  if (!email || email.indexOf('@') < 0) { authShowMsg('Enter your email address.', 'error'); return; }
+  if (!pass) { authShowMsg('Enter your password.', 'error'); return; }
+
+  const cloudOn = (typeof cloudConfigured === 'function') && cloudConfigured();
+  const a = state.auth || {};
+
+  // Only insist on a local account when there is no cloud to ask. On a new
+  // phone there is nothing stored locally yet, and that is perfectly normal.
+  if (!cloudOn && !hasAuth()) {
+    authShowMsg('No account set up on this browser.', 'error');
+    return;
+  }
+  // The local email check only makes sense for a local-only account.
+  if (!cloudOn && a.email && email.toLowerCase() !== (a.email || '').toLowerCase()) {
+    authRecordFail(); authShowMsg('Email or password is incorrect.', 'error'); return;
+  }
   // Cloud sign-in when configured; the local hash remains the fallback
   // so the app still opens if the network is down.
   let ok = false, usedCloud = false;
@@ -11117,15 +11146,20 @@ window.authLogin = async function() {
     try {
       await cloudSignIn(email, pass);
       ok = true; usedCloud = true;
+      try { localStorage.setItem('tm_last_email', email); } catch(e) {}
     } catch (err) {
       const m = (err && err.message) || '';
+      const hasLocal = !!(a && a.passwordHash);
       if (/Invalid login credentials|invalid_grant/i.test(m)) {
-        ok = await verifyPassword(pass, a);   // maybe a local-only account
+        ok = hasLocal ? await verifyPassword(pass, a) : false;
         if (!ok) { authRecordFail(); authShowMsg('Email or password is incorrect.', 'error'); return; }
       } else {
-        // Network or service problem — fall back to the local check
-        ok = await verifyPassword(pass, a);
-        if (!ok) { authRecordFail(); authShowMsg('Email or password is incorrect.', 'error'); return; }
+        // Network or service problem — fall back to the local check if we can
+        ok = hasLocal ? await verifyPassword(pass, a) : false;
+        if (!ok) {
+          authShowMsg('Cannot reach the server and this device has no saved account. Check your connection and try again.', 'error');
+          return;
+        }
         authShowMsg('Signed in offline \u2014 changes will sync when the connection returns.', 'info');
       }
     }
@@ -11338,8 +11372,24 @@ window.authLogout = function() {
 };
 window.authShowGate = function() {
   const ov=document.getElementById('authOverlay'); if (!ov) return; ov.style.display='flex';
-  if (hasAuth()) { showLoginView(); document.getElementById('authEmail').value=state.auth.email||''; setTimeout(function(){document.getElementById('authPass').focus();},50); }
-  else { showSetupView(); setTimeout(function(){document.getElementById('setupEmail').focus();},50); }
+  // With a database behind the app, "no account on THIS device" no longer
+  // means "no account exists". A phone that has never opened the app still
+  // needs the Sign in screen, not Set up. Only fall back to Set up when
+  // there is no cloud at all.
+  const cloud = (typeof cloudConfigured === 'function') && cloudConfigured();
+  const localAccount = !!(state.auth && state.auth.passwordHash);
+  if (cloud || localAccount) {
+    showLoginView();
+    const em = document.getElementById('authEmail');
+    if (em) em.value = (state.auth && state.auth.email) || localStorage.getItem('tm_last_email') || '';
+    setTimeout(function(){
+      const f = (em && em.value) ? document.getElementById('authPass') : em;
+      if (f) f.focus();
+    },50);
+  } else {
+    showSetupView();
+    setTimeout(function(){document.getElementById('setupEmail').focus();},50);
+  }
 };
 window.authChangePassword = async function() {
   if (!hasAuth()) { alert('No account set up.'); return; }
