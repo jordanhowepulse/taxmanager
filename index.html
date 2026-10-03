@@ -3889,6 +3889,11 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{
   .ess-toggle .et-sub{white-space:normal}
 }
 
+
+/* Cloud sync status chip */
+#cloudStatusChip .meta-value{color:var(--teal-light,#5eead4)!important}
+@media(max-width:900px){#cloudStatusChip{display:none}}
+
 </style>
 </head>
 <body>
@@ -4007,7 +4012,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{
   </div>
 </div>
 
-<header><div class="header-inner"><div><h1><span class="logo"><svg viewBox="0 0 32 32" aria-label="TaxManager"><rect width="32" height="32" rx="9" fill="#14b8a6"/><text x="16" y="21.5" font-family="'Space Grotesk',Inter,sans-serif" font-size="13" font-weight="700" fill="#0a1420" text-anchor="middle" letter-spacing="-0.5">TM</text></svg></span><span class="brand"><span class="mark">TaxManager</span><span class="tag">Online</span></span></h1><div class="sub"></div></div><div class="header-meta"><span class="meta-chip"><span class="meta-label">Monthly Income</span><span class="meta-value" id="hdrIncome">&mdash;</span></span><span class="meta-chip"><span class="meta-label">Active Period</span><span class="meta-value" id="hdrPeriod">&mdash;</span></span><span class="meta-chip" id="ghSyncChip" style="display:none;cursor:pointer;" onclick="switchTab('settings');setTimeout(function(){const e=document.querySelector('#ghStatus');if(e)window.scrollTo(0,e.getBoundingClientRect().top+window.scrollY-80);},80);" title="Click to manage sync"><span class="meta-label">Cloud Sync</span><span class="meta-value" id="ghChipVal" style="font-size:0.78rem;">&mdash;</span></span><button id="notifBell" onclick="toggleNotifPanel()" title="View all flagged items" style="display:none;background:transparent;border:1px solid var(--border-strong);color:var(--muted);padding:0.4rem 0.7rem;border-radius:6px;cursor:pointer;font-size:0.78rem;font-weight:500;font-family:inherit;align-items:center;gap:0.4rem;margin-left:0.5rem;position:relative;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg><span id="notifBellLabel">Insights</span><span id="notifBellBadge" style="display:none;position:absolute;top:-6px;right:-6px;background:#e8edf2;color:#0a1420;font-size:0.6rem;padding:0.1rem 0.4rem;border-radius:999px;font-weight:700;line-height:1.2;min-width:18px;text-align:center;"></span></button><button id="hdrSignOut" onclick="hdrAccountAction()" title="Sign out / Account" style="background:transparent;border:1px solid var(--border-strong);color:var(--muted);padding:0.4rem 0.7rem;border-radius:6px;cursor:pointer;font-size:0.78rem;font-weight:500;font-family:inherit;display:inline-flex;align-items:center;gap:0.4rem;margin-left:0.5rem;transition:all 0.15s;" onmouseover="this.style.color='var(--bad)';this.style.borderColor='rgba(239,68,68,0.4)';" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border-strong)';"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg><span id="hdrSignOutLabel">Sign out</span></button></div></div></header>
+<header><div class="header-inner"><div><h1><span class="logo"><svg viewBox="0 0 32 32" aria-label="TaxManager"><rect width="32" height="32" rx="9" fill="#14b8a6"/><text x="16" y="21.5" font-family="'Space Grotesk',Inter,sans-serif" font-size="13" font-weight="700" fill="#0a1420" text-anchor="middle" letter-spacing="-0.5">TM</text></svg></span><span class="brand"><span class="mark">TaxManager</span><span class="tag">Online</span></span></h1><div class="sub"></div></div><div class="header-meta"><span class="meta-chip"><span class="meta-label">Monthly Income</span><span class="meta-value" id="hdrIncome">&mdash;</span></span><span class="meta-chip"><span class="meta-label">Active Period</span><span class="meta-value" id="hdrPeriod">&mdash;</span></span><span class="meta-chip" id="cloudStatusChip"><span class="meta-label">Sync</span><span class="meta-value" id="cloudStatusVal" style="font-size:0.78rem;">&mdash;</span></span><span class="meta-chip" id="ghSyncChip" style="display:none;cursor:pointer;" onclick="switchTab('settings');setTimeout(function(){const e=document.querySelector('#ghStatus');if(e)window.scrollTo(0,e.getBoundingClientRect().top+window.scrollY-80);},80);" title="Click to manage sync"><span class="meta-label">Cloud Sync</span><span class="meta-value" id="ghChipVal" style="font-size:0.78rem;">&mdash;</span></span><button id="notifBell" onclick="toggleNotifPanel()" title="View all flagged items" style="display:none;background:transparent;border:1px solid var(--border-strong);color:var(--muted);padding:0.4rem 0.7rem;border-radius:6px;cursor:pointer;font-size:0.78rem;font-weight:500;font-family:inherit;align-items:center;gap:0.4rem;margin-left:0.5rem;position:relative;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg><span id="notifBellLabel">Insights</span><span id="notifBellBadge" style="display:none;position:absolute;top:-6px;right:-6px;background:#e8edf2;color:#0a1420;font-size:0.6rem;padding:0.1rem 0.4rem;border-radius:999px;font-weight:700;line-height:1.2;min-width:18px;text-align:center;"></span></button><button id="hdrSignOut" onclick="hdrAccountAction()" title="Sign out / Account" style="background:transparent;border:1px solid var(--border-strong);color:var(--muted);padding:0.4rem 0.7rem;border-radius:6px;cursor:pointer;font-size:0.78rem;font-weight:500;font-family:inherit;display:inline-flex;align-items:center;gap:0.4rem;margin-left:0.5rem;transition:all 0.15s;" onmouseover="this.style.color='var(--bad)';this.style.borderColor='rgba(239,68,68,0.4)';" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border-strong)';"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg><span id="hdrSignOutLabel">Sign out</span></button></div></div></header>
 <div id="notifPanel">
   <div class="notif-head">
     <div class="notif-head-title">
@@ -4916,6 +4921,271 @@ function runMigrations() {
   }
   if (dirty) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){} }
 }
+/* ============================================================
+   CLOUD STORAGE — Supabase
+   Written as plain fetch() calls against Supabase's REST API so
+   the app keeps its zero-dependency, single-file design. No CDN,
+   nothing to load, works the moment the file opens.
+
+   Design rules:
+     1. localStorage stays the primary read — the app opens instantly
+     2. The cloud is the shared truth — read on sign-in, written after
+     3. If the network fails, everything keeps working locally and
+        retries later. Nothing is ever lost to a dropped connection
+   ============================================================ */
+const TM_CLOUD = {
+  url:  'https://knrjpjtvneugekvvdkde.supabase.co',
+  key:  'sb_publishable_Zuq2qVrj4aXcwBjTqoBdgw_mJhUQpK0',
+  session: null,          // { access_token, refresh_token, expires_at, user }
+  status: 'offline',      // offline | syncing | synced | error | local-only
+  lastSync: null,
+  lastError: null,
+  pending: false
+};
+window.TM_CLOUD = TM_CLOUD;
+
+function cloudConfigured() { return !!(TM_CLOUD.url && TM_CLOUD.key); }
+window.cloudConfigured = cloudConfigured;
+
+/* ── Session persistence ─────────────────────────────────── */
+const TM_SESSION_KEY = 'tm_cloud_session';
+function cloudSaveSession(s) {
+  TM_CLOUD.session = s;
+  try {
+    if (s) localStorage.setItem(TM_SESSION_KEY, JSON.stringify(s));
+    else localStorage.removeItem(TM_SESSION_KEY);
+  } catch(e) {}
+}
+function cloudLoadSession() {
+  try {
+    const raw = localStorage.getItem(TM_SESSION_KEY);
+    if (raw) TM_CLOUD.session = JSON.parse(raw);
+  } catch(e) { TM_CLOUD.session = null; }
+  return TM_CLOUD.session;
+}
+function cloudSignedIn() { return !!(TM_CLOUD.session && TM_CLOUD.session.access_token); }
+window.cloudSignedIn = cloudSignedIn;
+
+/* ── Low-level request helper ────────────────────────────── */
+async function cloudFetch(path, opts) {
+  opts = opts || {};
+  const headers = Object.assign({
+    'apikey': TM_CLOUD.key,
+    'Content-Type': 'application/json'
+  }, opts.headers || {});
+  if (TM_CLOUD.session && TM_CLOUD.session.access_token && !opts.noAuth) {
+    headers['Authorization'] = 'Bearer ' + TM_CLOUD.session.access_token;
+  }
+  const res = await fetch(TM_CLOUD.url + path, {
+    method: opts.method || 'GET',
+    headers: headers,
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  let payload = null;
+  const text = await res.text();
+  if (text) { try { payload = JSON.parse(text); } catch(e) { payload = text; } }
+  if (!res.ok) {
+    const msg = (payload && (payload.msg || payload.message || payload.error_description || payload.error)) || res.statusText;
+    const err = new Error(msg || ('HTTP ' + res.status));
+    err.status = res.status;
+    err.payload = payload;
+    throw err;
+  }
+  return payload;
+}
+
+/* ── Keep the access token fresh ─────────────────────────── */
+async function cloudRefreshIfNeeded() {
+  const s = TM_CLOUD.session;
+  if (!s || !s.refresh_token) return false;
+  // Refresh a minute before it actually expires
+  if (s.expires_at && Date.now() < (s.expires_at - 60000)) return true;
+  try {
+    const r = await cloudFetch('/auth/v1/token?grant_type=refresh_token', {
+      method: 'POST', noAuth: true, body: { refresh_token: s.refresh_token }
+    });
+    cloudSaveSession({
+      access_token: r.access_token,
+      refresh_token: r.refresh_token,
+      expires_at: Date.now() + ((r.expires_in || 3600) * 1000),
+      user: r.user || s.user
+    });
+    return true;
+  } catch (e) {
+    // Refresh token rejected — the session is genuinely dead
+    cloudSaveSession(null);
+    return false;
+  }
+}
+
+/* ── Authentication ──────────────────────────────────────── */
+async function cloudSignUp(email, password) {
+  const r = await cloudFetch('/auth/v1/signup', {
+    method: 'POST', noAuth: true, body: { email: email, password: password }
+  });
+  // With "Confirm email" off, signup returns a session straight away
+  if (r.access_token) {
+    cloudSaveSession({
+      access_token: r.access_token,
+      refresh_token: r.refresh_token,
+      expires_at: Date.now() + ((r.expires_in || 3600) * 1000),
+      user: r.user
+    });
+    return { signedIn: true, user: r.user };
+  }
+  return { signedIn: false, needsConfirmation: true, user: r.user || r };
+}
+window.cloudSignUp = cloudSignUp;
+
+async function cloudSignIn(email, password) {
+  const r = await cloudFetch('/auth/v1/token?grant_type=password', {
+    method: 'POST', noAuth: true, body: { email: email, password: password }
+  });
+  cloudSaveSession({
+    access_token: r.access_token,
+    refresh_token: r.refresh_token,
+    expires_at: Date.now() + ((r.expires_in || 3600) * 1000),
+    user: r.user
+  });
+  return r.user;
+}
+window.cloudSignIn = cloudSignIn;
+
+async function cloudSignOut() {
+  try { await cloudFetch('/auth/v1/logout', { method: 'POST' }); } catch(e) {}
+  cloudSaveSession(null);
+  TM_CLOUD.status = 'offline';
+}
+window.cloudSignOut = cloudSignOut;
+
+function cloudUserId() {
+  return (TM_CLOUD.session && TM_CLOUD.session.user && TM_CLOUD.session.user.id) || null;
+}
+function cloudUserEmail() {
+  return (TM_CLOUD.session && TM_CLOUD.session.user && TM_CLOUD.session.user.email) || null;
+}
+window.cloudUserEmail = cloudUserEmail;
+
+/* ── Reading and writing the data row ────────────────────── */
+async function cloudPull() {
+  if (!cloudSignedIn()) return null;
+  if (!(await cloudRefreshIfNeeded())) return null;
+  const uid = cloudUserId();
+  const rows = await cloudFetch('/rest/v1/user_data?select=data,updated_at&user_id=eq.' + uid);
+  if (!rows || !rows.length) return null;
+  return rows[0];
+}
+window.cloudPull = cloudPull;
+
+async function cloudPush(stateObj) {
+  if (!cloudSignedIn()) return false;
+  if (!(await cloudRefreshIfNeeded())) return false;
+  const uid = cloudUserId();
+  await cloudFetch('/rest/v1/user_data', {
+    method: 'POST',
+    headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+    body: { user_id: uid, data: stateObj, updated_at: new Date().toISOString() }
+  });
+  TM_CLOUD.lastSync = Date.now();
+  return true;
+}
+window.cloudPush = cloudPush;
+
+/* ── Debounced save: local now, cloud shortly after ──────── */
+let _cloudSaveTimer = null;
+let _cloudRetry = 0;
+function cloudScheduleSave() {
+  if (!cloudSignedIn()) return;
+  TM_CLOUD.pending = true;
+  cloudPaintStatus();
+  clearTimeout(_cloudSaveTimer);
+  _cloudSaveTimer = setTimeout(async function(){
+    TM_CLOUD.status = 'syncing'; cloudPaintStatus();
+    try {
+      await cloudPush(state);
+      TM_CLOUD.status = 'synced';
+      TM_CLOUD.pending = false;
+      TM_CLOUD.lastError = null;
+      _cloudRetry = 0;
+    } catch (e) {
+      TM_CLOUD.status = 'error';
+      TM_CLOUD.lastError = e.message || String(e);
+      // Back off and try again — the local copy is already safe
+      _cloudRetry++;
+      if (_cloudRetry <= 5) {
+        setTimeout(cloudScheduleSave, Math.min(30000, 2000 * Math.pow(2, _cloudRetry)));
+      }
+    }
+    cloudPaintStatus();
+  }, 1500);
+}
+window.cloudScheduleSave = cloudScheduleSave;
+
+/* Flush any pending write before the tab closes */
+window.addEventListener('beforeunload', function(){
+  if (TM_CLOUD.pending && cloudSignedIn() && navigator.sendBeacon) {
+    try {
+      const uid = cloudUserId();
+      const blob = new Blob([JSON.stringify({
+        user_id: uid, data: state, updated_at: new Date().toISOString()
+      })], { type: 'application/json' });
+      navigator.sendBeacon(
+        TM_CLOUD.url + '/rest/v1/user_data?apikey=' + encodeURIComponent(TM_CLOUD.key), blob);
+    } catch(e) {}
+  }
+});
+
+/* ── Status chip ─────────────────────────────────────────── */
+function cloudPaintStatus() {
+  const el = document.getElementById('cloudStatusVal');
+  const chip = document.getElementById('cloudStatusChip');
+  if (!el) return;
+  if (!cloudSignedIn()) {
+    el.textContent = 'This device only';
+    if (chip) chip.title = 'Not signed in — data is saved in this browser only.';
+    return;
+  }
+  const map = {
+    syncing: 'Saving…',
+    synced:  'Saved',
+    error:   'Retrying…',
+    offline: 'Connected'
+  };
+  el.textContent = TM_CLOUD.pending && TM_CLOUD.status !== 'syncing' ? 'Saving…' : (map[TM_CLOUD.status] || 'Connected');
+  if (chip) {
+    chip.title = TM_CLOUD.status === 'error'
+      ? ('Could not reach the cloud: ' + (TM_CLOUD.lastError || 'unknown') + '. Your data is safe on this device and will sync when the connection returns.')
+      : ('Signed in as ' + (cloudUserEmail() || '') +
+         (TM_CLOUD.lastSync ? ' · last saved ' + new Date(TM_CLOUD.lastSync).toLocaleTimeString('en-GB') : ''));
+  }
+}
+window.cloudPaintStatus = cloudPaintStatus;
+
+/* ── Bring the cloud copy down after sign-in ─────────────── */
+async function cloudAdoptRemote() {
+  try {
+    const row = await cloudPull();
+    if (row && row.data && row.data.settings) {
+      state = row.data;
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+      TM_CLOUD.status = 'synced';
+      TM_CLOUD.lastSync = Date.now();
+      return 'pulled';
+    }
+    // No row yet — this account is new, so seed it with what is on this device
+    await cloudPush(state);
+    TM_CLOUD.status = 'synced';
+    return 'seeded';
+  } catch (e) {
+    TM_CLOUD.status = 'error';
+    TM_CLOUD.lastError = e.message || String(e);
+    return 'failed';
+  } finally {
+    cloudPaintStatus();
+  }
+}
+window.cloudAdoptRemote = cloudAdoptRemote;
+
 function saveState() {
   // Make sure the duplicate-protection store always exists so it travels
   // with a backup and survives a reload even before the first import.
@@ -4927,6 +5197,8 @@ function saveState() {
   }
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
   catch(e){ console.warn('Save failed', e); }
+  // Local write is done and safe. Queue a cloud write if signed in.
+  if (typeof cloudScheduleSave === 'function') { try { cloudScheduleSave(); } catch(e){} }
 }
 
 function defaultState() {
@@ -10750,7 +11022,12 @@ window.authLockedFor = authLockedFor;
 function genRecoveryCode() { const a = new Uint8Array(8); crypto.getRandomValues(a); const hex = Array.from(a).map(function(b){return b.toString(16).padStart(2,'0').toUpperCase();}).join(''); return hex.slice(0,4)+'-'+hex.slice(4,8)+'-'+hex.slice(8,12)+'-'+hex.slice(12,16); }
 function authShowMsg(text, kind) { const el = document.getElementById('authMsg'); if (!el) return; el.style.display='block'; el.textContent=text; const c={error:['rgba(239,68,68,0.12)','#fca5a5','rgba(239,68,68,0.3)'],ok:['rgba(34,197,94,0.12)','#86efac','rgba(34,197,94,0.3)'],info:['rgba(20,184,166,0.12)','#5eead4','rgba(20,184,166,0.3)']}[kind||'info']; el.style.background=c[0]; el.style.color=c[1]; el.style.border='1px solid '+c[2]; }
 function authClearMsg() { const el=document.getElementById('authMsg'); if(el) el.style.display='none'; }
-function hasAuth() { return !!(state.auth && state.auth.passwordHash); }
+function hasAuth() {
+  // A saved cloud session means this account exists, even on a brand-new
+  // device that has never seen a local password hash.
+  if (typeof cloudSignedIn === 'function' && cloudSignedIn()) return true;
+  return !!(state.auth && state.auth.passwordHash);
+}
 function isAuthed() { return sessionStorage.getItem('tm_authed') === '1'; }
 function markAuthed() { sessionStorage.setItem('tm_authed', '1'); }
 window.showSetupView = function(){ ['authLoginView','authForgotView','authRecoveryView'].forEach(function(i){document.getElementById(i).style.display='none';}); document.getElementById('authSetupView').style.display='block'; document.getElementById('authMode').textContent='Create account'; authClearMsg(); };
@@ -10762,6 +11039,23 @@ window.authSetup = async function() {
   if (!email||email.indexOf('@')<0) { authShowMsg('Enter a valid email.','error'); return; }
   if (p1.length<8) { authShowMsg('Password min 8 chars.','error'); return; }
   if (p1!==p2) { authShowMsg('Passwords do not match.','error'); return; }
+  // Create the cloud account first so the same details work on every device
+  if (typeof cloudConfigured === 'function' && cloudConfigured()) {
+    authShowMsg('Creating your account\u2026', 'info');
+    try {
+      const r = await cloudSignUp(email, p1);
+      if (!r.signedIn) {
+        authShowMsg('Account created. Check your email to confirm, then sign in.', 'ok');
+      }
+    } catch (err) {
+      const m = (err && err.message) || '';
+      if (/already registered|User already registered/i.test(m)) {
+        authShowMsg('That email already has an account. Use Sign in instead.', 'error');
+        return;
+      }
+      authShowMsg('Could not reach the server (' + m + '). Account created on this device only.', 'info');
+    }
+  }
   const salt=genSalt(); const ph=await sha256Hex(p1+':'+salt); const rc=genRecoveryCode(); const rh=await sha256Hex(rc+':'+salt);
   state.auth={email:email,passwordHash:ph,salt:salt,recoveryHash:rh,setupAt:new Date().toISOString()};
   saveState();
@@ -10815,12 +11109,38 @@ window.authLogin = async function() {
   if (!hasAuth()) { authShowMsg('No account set up on this browser.', 'error'); return; }
   const a = state.auth;
   if (email.toLowerCase() !== (a.email || '').toLowerCase()) { authRecordFail(); authShowMsg('Email or password is incorrect.', 'error'); return; }
-  const ok = await verifyPassword(pass, a);
+  // Cloud sign-in when configured; the local hash remains the fallback
+  // so the app still opens if the network is down.
+  let ok = false, usedCloud = false;
+  if (typeof cloudConfigured === 'function' && cloudConfigured()) {
+    authShowMsg('Signing in\u2026', 'info');
+    try {
+      await cloudSignIn(email, pass);
+      ok = true; usedCloud = true;
+    } catch (err) {
+      const m = (err && err.message) || '';
+      if (/Invalid login credentials|invalid_grant/i.test(m)) {
+        ok = await verifyPassword(pass, a);   // maybe a local-only account
+        if (!ok) { authRecordFail(); authShowMsg('Email or password is incorrect.', 'error'); return; }
+      } else {
+        // Network or service problem — fall back to the local check
+        ok = await verifyPassword(pass, a);
+        if (!ok) { authRecordFail(); authShowMsg('Email or password is incorrect.', 'error'); return; }
+        authShowMsg('Signed in offline \u2014 changes will sync when the connection returns.', 'info');
+      }
+    }
+  } else {
+    ok = await verifyPassword(pass, a);
+  }
   if (!ok) {
     const at = authRecordFail();
     const l = authLockedFor();
     authShowMsg(l ? 'Too many attempts. Locked for ' + l + 's.' : 'Email or password is incorrect.', 'error');
     return;
+  }
+  if (usedCloud) {
+    authShowMsg('Loading your data\u2026', 'info');
+    await cloudAdoptRemote();
   }
   // Upgrade a legacy SHA-256 record to PBKDF2 now that we know the password
   if (a.kdf !== 'pbkdf2') { await setPassword(a, pass); saveState(); }
@@ -11011,7 +11331,11 @@ window.hdrAccountAction = function() {
 };
 window.updateSignOutBtn = updateSignOutBtn;
 
-window.authLogout = function() { sessionStorage.removeItem('tm_authed'); location.reload(); };
+window.authLogout = function() {
+  sessionStorage.removeItem('tm_authed');
+  if (typeof cloudSignOut === 'function') { cloudSignOut().finally(function(){ location.reload(); }); }
+  else location.reload();
+};
 window.authShowGate = function() {
   const ov=document.getElementById('authOverlay'); if (!ov) return; ov.style.display='flex';
   if (hasAuth()) { showLoginView(); document.getElementById('authEmail').value=state.auth.email||''; setTimeout(function(){document.getElementById('authPass').focus();},50); }
@@ -15807,6 +16131,24 @@ window.tmApplyA11y = tmApplyA11y;
     wrapped.__a11y = true;
     window.renderAll = wrapped;
   }
+})();
+
+
+/* Restore a saved cloud session on load, then pull the latest data */
+(function(){
+  if (typeof cloudLoadSession !== 'function') return;
+  cloudLoadSession();
+  if (!cloudSignedIn()) { cloudPaintStatus(); return; }
+  // Already signed in on this device — skip the gate and sync
+  markAuthed();
+  setTimeout(async function(){
+    const ov = document.getElementById('authOverlay');
+    if (ov) ov.style.display = 'none';
+    const outcome = await cloudAdoptRemote();
+    if (outcome === 'pulled') { try { renderAll(); } catch(e){} }
+    if (typeof updateSignOutBtn === 'function') updateSignOutBtn();
+    cloudPaintStatus();
+  }, 150);
 })();
 
 </script>
