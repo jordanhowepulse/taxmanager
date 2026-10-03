@@ -11176,10 +11176,17 @@ window.authLogin = async function() {
     authShowMsg('Loading your data\u2026', 'info');
     await cloudAdoptRemote();
   }
-  // Upgrade a legacy SHA-256 record to PBKDF2 now that we know the password
-  if (a.kdf !== 'pbkdf2') { await setPassword(a, pass); saveState(); }
+  // cloudAdoptRemote may have replaced the whole state object, so re-read
+  // auth from the live state rather than the copy taken before sign-in.
+  if (!state.auth) state.auth = {};
+  const acct = state.auth;
+  if (!acct.email) acct.email = email;
+  // Give this device a local password record so it still opens offline,
+  // and upgrade any legacy SHA-256 record to PBKDF2 while we have the password.
+  if (acct.kdf !== 'pbkdf2') { await setPassword(acct, pass); }
+  saveState();
   authClearFails();
-  if (a.totpEnabled && a.totpSecret) { show2faView(); return; }
+  if (acct.totpEnabled && acct.totpSecret) { show2faView(); return; }
   dismissAuth();
 };
 
@@ -15797,7 +15804,15 @@ document.addEventListener('input', function(e) {
 
 renderAll();
 if (typeof ghAutoPullOnLoad==='function') setTimeout(function(){ ghAutoPullOnLoad(); }, 200);
-if (typeof hasAuth === 'function' && hasAuth() && !isAuthed()) { authShowGate(); }
+// Show the sign-in gate whenever a cloud account could exist, not just when
+// THIS browser has a saved password. A brand-new phone has no local hash but
+// the account still lives on the server, so it must be asked to sign in.
+(function(){
+  if (isAuthed()) return;
+  const cloudOn = (typeof cloudConfigured === 'function') && cloudConfigured();
+  const localAcct = (typeof hasAuth === 'function') && hasAuth();
+  if (cloudOn || localAcct) { authShowGate(); }
+})();
 
 /* ============================================================
    REACTIVE SYNC LAYER
@@ -16094,7 +16109,7 @@ window.updateSyncChip = updateSyncChip;
 /* ── Build stamp ──────────────────────────────────────────────────
    Shown in the header so it is obvious at a glance whether the
    browser is running the latest file or a cached copy. */
-const TM_BUILD = '2026-10-03 mobile-sync';
+const TM_BUILD = '2026-10-03 gate-fix';
 window.TM_BUILD = TM_BUILD;
 (function(){
   function paint() {
