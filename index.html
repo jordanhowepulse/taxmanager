@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>TaxManager &mdash; Online</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%2314b8a6'/%3E%3Ctext x='16' y='22' font-family='Helvetica,Arial,sans-serif' font-size='13' font-weight='700' fill='%230a1420' text-anchor='middle'%3ETM%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%2314b8a6'/%3E%3Ctext x='90' y='120' font-family='Helvetica,Arial,sans-serif' font-size='72' font-weight='700' fill='%230a1420' text-anchor='middle'%3ETM%3C/text%3E%3C/svg%3E">
@@ -3971,7 +3974,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{
   <div style="background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:2rem;max-width:420px;width:100%;box-shadow:0 20px 60px -10px rgba(0,0,0,0.7),0 0 0 1px rgba(20,184,166,0.2);">
     <div style="display:flex;align-items:center;gap:0.7rem;margin-bottom:1rem;">
       <span style="display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;"><svg viewBox="0 0 32 32" style="width:44px;height:44px;display:block;"><rect width="32" height="32" rx="9" fill="#14b8a6"/><text x="16" y="21.5" font-family="'Space Grotesk',Inter,sans-serif" font-size="13" font-weight="700" fill="#0a1420" text-anchor="middle" letter-spacing="-0.5">TM</text></svg></span>
-      <div><div style="font-size:1.05rem;font-weight:600;">TaxManager</div><div style="font-size:0.7rem;color:var(--muted-2);letter-spacing:0.12em;text-transform:uppercase;font-weight:600;" id="authMode">Sign in</div></div>
+      <div><div style="font-size:1.05rem;font-weight:600;">TaxManager</div><div style="font-size:0.7rem;color:var(--muted-2);letter-spacing:0.12em;text-transform:uppercase;font-weight:600;" id="authMode">Sign in</div><div id="authBuild" style="font-size:0.6rem;color:var(--muted-2);opacity:0.65;margin-top:0.15rem;font-variant-numeric:tabular-nums;">build &mdash;</div></div>
     </div>
     <div id="authMsg" style="display:none;margin-bottom:0.9rem;padding:0.55rem 0.8rem;border-radius:6px;font-size:0.78rem;"></div>
     <div id="authLoginView">
@@ -4956,7 +4959,10 @@ const TM_CLOUD = {
   status: 'offline',      // offline | syncing | synced | error | local-only
   lastSync: null,
   lastError: null,
-  pending: false
+  pending: false,
+  remoteStamp: null,     // updated_at of the row this page last saw
+  conflict: false,       // another device wrote after we loaded
+  conflictRow: null
 };
 window.TM_CLOUD = TM_CLOUD;
 
@@ -5097,15 +5103,43 @@ async function cloudPush(stateObj) {
   if (!cloudSignedIn()) return false;
   if (!(await cloudRefreshIfNeeded())) return false;
   const uid = cloudUserId();
+  const written = new Date().toISOString();
   await cloudFetch('/rest/v1/user_data', {
     method: 'POST',
     headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
-    body: { user_id: uid, data: stateObj, updated_at: new Date().toISOString() }
+    body: { user_id: uid, data: stateObj, updated_at: written }
   });
+  // Remember what we just wrote so a later poll does not mistake our own
+  // write for a change made on another device.
+  TM_CLOUD.remoteStamp = written;
   TM_CLOUD.lastSync = Date.now();
   return true;
 }
 window.cloudPush = cloudPush;
+
+/* Refuse to overwrite a copy another device wrote after this page loaded */
+async function cloudSafePush(stateObj) {
+  if (!cloudSignedIn()) return false;
+  if (TM_CLOUD.conflict) return false;
+  if (TM_CLOUD.remoteStamp) {
+    try {
+      const rows = await cloudFetch('/rest/v1/user_data?select=updated_at&user_id=eq.' + cloudUserId());
+      const remote = (rows && rows.length) ? String(rows[0].updated_at) : null;
+      if (remote && remote !== TM_CLOUD.remoteStamp) {
+        TM_CLOUD.conflict = true;
+        if (typeof cloudShowConflict === 'function') cloudShowConflict();
+        cloudPaintStatus();
+        return false;
+      }
+    } catch (e) {
+      // Could not check (offline). The local copy is already safe; skip the
+      // push rather than risk clobbering, and the retry will try again.
+      throw e;
+    }
+  }
+  return cloudPush(stateObj);
+}
+window.cloudSafePush = cloudSafePush;
 
 /* ── Debounced save: local now, cloud shortly after ──────── */
 let _cloudSaveTimer = null;
@@ -5118,7 +5152,7 @@ function cloudScheduleSave() {
   _cloudSaveTimer = setTimeout(async function(){
     TM_CLOUD.status = 'syncing'; cloudPaintStatus();
     try {
-      await cloudPush(state);
+      await cloudSafePush(state);
       TM_CLOUD.status = 'synced';
       TM_CLOUD.pending = false;
       TM_CLOUD.lastError = null;
@@ -5161,6 +5195,7 @@ function cloudPaintStatus() {
     if (chip) chip.title = 'Not signed in — data is saved in this browser only.';
     return;
   }
+  if (TM_CLOUD.conflict) { el.textContent = 'Out of date'; if (chip) chip.title = 'Another device saved newer changes. Saving is paused until you choose which version to keep.'; return; }
   const map = {
     syncing: 'Saving…',
     synced:  'Saved',
@@ -5184,6 +5219,7 @@ async function cloudAdoptRemote() {
     if (row && row.data && row.data.settings) {
       state = row.data;
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+      TM_CLOUD.remoteStamp = row.updated_at ? String(row.updated_at) : null;
       TM_CLOUD.status = 'synced';
       TM_CLOUD.lastSync = Date.now();
       return 'pulled';
@@ -6322,7 +6358,9 @@ window.setDDEssentiality = function(id, v) {
   saveState();
   renderDDEssentials();
   if (typeof renderDDTimeline === 'function') renderDDTimeline();
+  if (typeof renderDDs === 'function') { try { renderDDs(); } catch(e){} }
   if (typeof renderWealth === 'function') { try { renderWealth(); } catch(e){} }
+  if (typeof renderDDAudit === 'function') { try { renderDDAudit(); } catch(e){} }
   if (typeof requestSync === 'function') requestSync('change', 200);
 };
 
@@ -11081,7 +11119,7 @@ window.authSetup = async function() {
   document.getElementById('authMode').textContent='Save your recovery code';
 };
 window.copyRecoveryCode = function() { const t=document.getElementById('recoveryCodeDisplay').textContent; if(navigator.clipboard) navigator.clipboard.writeText(t).then(function(){authShowMsg('Copied.','ok');}); };
-window.dismissAuth = function() { markAuthed(); document.getElementById('authOverlay').style.display='none'; updateSignOutBtn(); renderAll(); };
+window.dismissAuth = function() { markAuthed(); try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch(e){} document.getElementById('authOverlay').style.display='none'; updateSignOutBtn(); renderAll(); };
 /* ── Sign-in with optional 2FA ─────────────────────────────── */
 const AUTH_VIEWS = ['authLoginView','authSetupView','authForgotView','authRecoveryView','auth2faView','auth2faRecoveryView'];
 function showAuthView(id, modeLabel) {
@@ -12580,11 +12618,10 @@ function renderSubscriptionAudit() {
   h += '<tr class="total-row"><td colspan="3"><strong>Total subscription cost</strong></td><td class="num"><strong>'+fmt(totMo)+'</strong></td><td class="num"><strong>'+fmt(totMo*12)+'</strong></td><td></td></tr></tbody></table>';
   el.innerHTML = h;
 }
-window.setDDEssentiality = function(id, v) {
-  const d = state.directDebits.find(function(x){return x.id===id;});
-  if (!d) return;
-  d.essentiality = v; saveState(); renderWealth(); if(typeof renderDDs==='function') renderDDs();
-};
+/* setDDEssentiality is defined earlier, in the Essential-vs-non-essential
+   block. An older, thinner copy used to sit here and — being later in the
+   file — silently won, so tagging a DD refreshed the Wealth tab but not the
+   essentials summary, the timeline, or the engines. Removed deliberately. */
 
 function renderDDAudit() {
   const el = document.getElementById('wealthDDAudit');
@@ -16109,7 +16146,7 @@ window.updateSyncChip = updateSyncChip;
 /* ── Build stamp ──────────────────────────────────────────────────
    Shown in the header so it is obvious at a glance whether the
    browser is running the latest file or a cached copy. */
-const TM_BUILD = '2026-10-03 gate-fix';
+const TM_BUILD = '2026-10-03 live-sync';
 window.TM_BUILD = TM_BUILD;
 (function(){
   function paint() {
@@ -16198,6 +16235,136 @@ window.tmApplyA11y = tmApplyA11y;
   }
 })();
 
+
+/* ── Keep devices in step ──────────────────────────────────────────
+   The app used to pull only at load, so a change made on the iPad was
+   invisible on an already-open laptop tab — and worse, the laptop's next
+   edit would upsert its stale copy straight over the newer one. This
+   block polls for remote changes, adopts them when it is safe to do so,
+   and refuses to push over a copy written by another device.         */
+(function(){
+  if (typeof cloudPull !== 'function') return;
+
+  function rowStamp(row){ return (row && row.updated_at) ? String(row.updated_at) : null; }
+
+  // Is this element, or anything above it, hidden?
+  function hidden(el){
+    for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
+      if (n.style && n.style.display === 'none') return true;
+      if (n.hasAttribute && n.hasAttribute('hidden')) return true;
+    }
+    return false;
+  }
+
+  function busy(){
+    // Don't yank the view out from under a dialog that is actually open, or a
+    // field the user is actually typing in. Focus left behind on a hidden
+    // element (the sign-in box after it closes) must NOT count — that would
+    // stall syncing for the whole session.
+    const a = document.activeElement;
+    if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && !a.disabled && !a.readOnly && !hidden(a)) return true;
+    // Check every modal, not just the first one in the document.
+    const modals = document.querySelectorAll('.modal');
+    for (let i = 0; i < modals.length; i++) {
+      const m = modals[i];
+      if (m.style && m.style.display && m.style.display !== 'none') return true;
+    }
+    return false;
+  }
+
+  function adopt(row){
+    state = row.data;
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
+    TM_CLOUD.remoteStamp = rowStamp(row);
+    TM_CLOUD.status = 'synced';
+    TM_CLOUD.lastSync = Date.now();
+    try { renderAll(); } catch(e){}
+    cloudPaintStatus();
+    cloudFlash('Updated from another device');
+  }
+
+  // Brief, unobtrusive confirmation in the header chip
+  let _flashTimer = null;
+  window.cloudFlash = function(msg){
+    const el = document.getElementById('cloudStatusVal');
+    if (!el) return;
+    el.textContent = msg;
+    clearTimeout(_flashTimer);
+    _flashTimer = setTimeout(function(){ cloudPaintStatus(); }, 4000);
+  };
+
+  window.cloudShowConflict = function(){
+    if (document.getElementById('cloudConflictBar')) return;
+    const bar = document.createElement('div');
+    bar.id = 'cloudConflictBar';
+    bar.setAttribute('role','alert');
+    bar.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#1c2b3d;'
+      + 'border-top:2px solid #f59e0b;color:#e8edf2;padding:0.9rem 1rem;display:flex;flex-wrap:wrap;'
+      + 'gap:0.6rem;align-items:center;justify-content:center;font-size:0.85rem;'
+      + 'box-shadow:0 -8px 30px rgba(0,0,0,0.5);';
+    bar.innerHTML =
+      '<span style="flex:1 1 280px;min-width:240px;">This page is out of date — another device saved '
+      + 'changes after this one loaded. Saving has been paused so nothing is overwritten.</span>'
+      + '<button type="button" id="cfTakeRemote" style="background:#14b8a6;border:none;color:#0a1420;'
+      + 'font-weight:600;padding:0.5rem 0.9rem;border-radius:6px;cursor:pointer;font-family:inherit;">'
+      + 'Load the other device’s version</button>'
+      + '<button type="button" id="cfKeepLocal" style="background:transparent;border:1px solid #475569;'
+      + 'color:#e8edf2;padding:0.5rem 0.9rem;border-radius:6px;cursor:pointer;font-family:inherit;">'
+      + 'Keep this page’s version</button>';
+    document.body.appendChild(bar);
+
+    bar.querySelector('#cfTakeRemote').addEventListener('click', async function(){
+      try {
+        const row = TM_CLOUD.conflictRow || await cloudPull();
+        if (row && row.data && row.data.settings) adopt(row);
+      } catch(e){}
+      TM_CLOUD.conflict = false; TM_CLOUD.conflictRow = null;
+      bar.remove(); cloudPaintStatus();
+    });
+
+    bar.querySelector('#cfKeepLocal').addEventListener('click', async function(){
+      // Accept the remote stamp so the next push is allowed to win
+      try {
+        const row = await cloudPull();
+        TM_CLOUD.remoteStamp = rowStamp(row);
+      } catch(e){}
+      TM_CLOUD.conflict = false; TM_CLOUD.conflictRow = null;
+      bar.remove();
+      if (typeof cloudScheduleSave === 'function') cloudScheduleSave();
+    });
+  };
+
+  let _deferrals = 0;
+  async function cloudRefresh(){
+    if (!cloudSignedIn() || TM_CLOUD.conflict) return;
+    let row;
+    try { row = await cloudPull(); } catch(e){ return; }
+    if (!row || !row.data || !row.data.settings) return;
+    const s = rowStamp(row);
+    if (!TM_CLOUD.remoteStamp) { TM_CLOUD.remoteStamp = s; return; }
+    if (s === TM_CLOUD.remoteStamp) return;
+    if (TM_CLOUD.pending) {
+      // Unsaved local edits AND a newer remote copy — ask rather than guess
+      TM_CLOUD.conflict = true; TM_CLOUD.conflictRow = row;
+      cloudPaintStatus(); cloudShowConflict(); return;
+    }
+    if (busy() && _deferrals < 3) { _deferrals++; setTimeout(cloudRefresh, 4000); return; }
+    _deferrals = 0;
+    adopt(row);
+  }
+  window.cloudRefresh = cloudRefresh;
+
+  document.addEventListener('visibilitychange', function(){
+    if (!document.hidden) cloudRefresh();
+  });
+  window.addEventListener('focus', function(){ cloudRefresh(); });
+  setInterval(function(){ if (!document.hidden) cloudRefresh(); }, 20000);
+  setTimeout(cloudRefresh, 3000);
+})();
+
+/* Show the build number on the sign-in card so any device can be identified */
+(function(){ try{ var b=document.getElementById('authBuild');
+  if(b) b.textContent='build '+((typeof TM_BUILD!=='undefined')?TM_BUILD:'unknown'); }catch(e){} })();
 
 /* Restore a saved cloud session on load, then pull the latest data */
 (function(){
